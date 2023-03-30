@@ -77,12 +77,12 @@
     # basic operators
     ops = [:+, :-, :/, :*]
     for op in ops
-        expr = :(@test all($op(be_2d.value, r_2d) .== $op(be_2d, r_2d)))
+        expr = :(@test all($op($be_2d.value, $r_2d) .== $op($be_2d, $r_2d)))
         eval(expr)
     end
     ops = [:.+, :.-, :./, :.*]
     for op in ops
-        expr = :(@test all($op(be_2d.value, r_2d) .== $op(be_2d, r_2d)))
+        expr = :(@test all($op($be_2d.value, $r_2d) .== $op($be_2d, $r_2d)))
         eval(expr)
     end
 end
