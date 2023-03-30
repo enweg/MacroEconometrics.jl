@@ -18,8 +18,17 @@ metadata field.
 
 ## Behaviour
 
-- Most basic iterations will directly be forwarded to the value field. As such,
-  the type can be used like any other array, including multiplication with other arrays.
+- Most basic operations will directly be forwarded to the value field. As such,
+  the type can be used like any other array, including multiplication with other
+  arrays, iteration, etc.
+  
+## Fields
+
+- `value::Array{T}`: The actual values of the estimated quantity. Should be an
+  Array; If multiple chains have been used, then the chains should be stacked
+  along the third dimension
+- `metadata::M`: Any additional data that one wishes to save relating to the
+  estimation. This could be warnings from the sampling algorithms, etc.
 """
 struct BayesianEstimated{T, M}<:Estimated
     value::Array{T}
