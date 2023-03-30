@@ -10,6 +10,22 @@ function is_stable(var::AbstractVectorAutoregression) end
 
 const FREQUENCIES = [:day, :month, :quarter, :year]
 
+"""
+     Check whether data is of a regular and known frequency.
+
+## Arguments
+
+- `data::TSFrame`: Time series data
+"""
+function _check_regularity_data(data::TSFrame) 
+    for freq in FREQUENCIES
+        if isregular(data, freq)
+            return true
+        end
+    end
+    return false
+end
+
 @doc raw"""
     VAR model
 
@@ -50,20 +66,28 @@ y_{t-p}')'``.
 mutable struct VAR{E<:Estimated}
     n::Int
     p::Int
-    B::E
-    b0::E 
-    Σ::E
+    B::Union{Nothing, E}
+    b0::Union{Nothing, E}
+    Σ::Union{Nothing, E}
 
     data::TSFrame
 
-    function VAR(n::Int, p::Int, B::E, b0::E, Σ::E, data::TSFrame; verbose = true) where {E<:Estimated}
+    function VAR(n::Int, p::Int, B::E, b0::E, Σ::E, data::TSFrame) where {E<:Estimated}
         # check if data is regular. VAR models are only appropriate for regularly spaced data
-        for freq in FREQUENCIES
-            if isregular(data, freq)
-                verbose ? @info("VAR is specified in frequency: $freq") : nothing 
-                return new{E}(n, p, B, b0, Σ, data)
-            end
+        regular = _check_regularity_data(data)
+        if !regular
+            throw(ErrorException("VAR has no known frequency"))
         end
-        throw(ErrorException("VAR has no known frequency"))
+        return new{E}(n, p, B, b0, Σ, data)
+    end
+    function VAR(data::TSFrame, p; type::Type{T}=BayesianEstimated) where {T<:Estimated}
+        regular = _check_regularity_data(data)
+        if !regular
+            throw(ErrorException("VAR has no known frequency"))
+        end
+        n = nrow(data)
+        # estimates do not yet exist, so set to zero
+        B = b0 = Σ = nothing
+        return new{type}(n, p, B, b0, Σ, data)
     end
 end

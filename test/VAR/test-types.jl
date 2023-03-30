@@ -1,4 +1,18 @@
-@testset "VAR type" begin
+@testset "Check regular" begin
+    n = 3
+    dates = Date("1996-11-19"):Quarter(1):Date("2023-03-30")
+    data = TSFrame(randn(length(dates), n), dates)    
+    # data should be regular
+    @test MacroEconometrics._check_regularity_data(data)
+
+    dates = vcat(dates[1:3], dates[5:end])
+    data = TSFrame(randn(length(dates), n), dates)
+    # data should not be regular
+    @test !MacroEconometrics._check_regularity_data(data)
+end
+
+
+@testset "VAR type all information" begin
     n = 3
     p = 2
     B = BayesianEstimated(randn(n, n*p), nothing)
@@ -15,5 +29,30 @@
 
     dates = vcat(dates[1:3], dates[5:end])
     data = TSFrame(randn(length(dates), n), dates)
-    @test_throws "VAR has no known" VAR(n, p, B, b0, Σ, data)
+    @test_throws ErrorException VAR(n, p, B, b0, Σ, data)
+end
+
+@testset "VAR type only data and lags" begin
+    n = 3
+    p = 2
+    dates = Date("1996-11-19"):Quarter(1):Date("2023-03-30")
+    data = TSFrame(randn(length(dates), n), dates)
+
+    # model should have BayesianEstimated as parameter
+    model = VAR(data, p)
+    @test typeof(model) <: VAR{BayesianEstimated}
+
+    # model should have FixedEstimated as parameter
+    model = VAR(data, p; type=FixedEstimated)
+    @test typeof(model) <: VAR{FixedEstimated}
+
+    # model quantities should be overwritable
+    B = FixedEstimated(randn(n, n*p))
+    model.B = B
+    @test model.B == B
+
+    # error should be thrown when data is not regular
+    dates = vcat(dates[1:3], dates[5:end])
+    data = TSFrame(randn(length(dates), n), dates)
+    @test_throws ErrorException VAR(data, p)
 end
