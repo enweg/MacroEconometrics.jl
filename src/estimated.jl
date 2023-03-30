@@ -9,6 +9,35 @@ can then be either Frequentist or Bayesian.
 """
 abstract type Estimated end 
 
+
+""""
+  Fixing the estimation.
+
+Sometimes we want to fix a parameter to a specific value. Although this
+parameter is no-longer technically estimated, it is still an estimable quantity
+and thus is still a subtype of Estimated. 
+
+## Fields
+
+-`value::Array{T}`: The value of the quantity
+"""
+struct FixedEstimated{T}<:Estimated
+  value::Array{T}
+end
+@forward FixedEstimated.value Base.getindex, Base.length, Base.size, Base.ndims, 
+    Base.first, Base.last, Base.lastindex, Base.firstindex, Base.setindex!, 
+    Base.eltype, Base.eachslice, Base.eachcol, Base.eachrow
+
+ops = [:+, :-, :*, :/]
+for op in ops
+    eval(:(Base.$op(x::V, fe::FixedEstimated{T}) where {V, T} = Base.$op(x, fe.value)))
+    eval(:(Base.$op(fe::FixedEstimated{T}, args...) where {T} = Base.$op(fe.value, args...)))
+end
+
+Base.broadcasted(f, fe::FixedEstimated{T}, args...) where {T} = Base.broadcasted(f, fe.value, args...)
+Base.broadcasted(f, x::V, fe::FixedEstimated{T}) where {V, T} = Base.broadcasted(f, x, fe.value)
+
+
 """
 Since conjugacy is incredible rare and often not actually plausible (the priors
 are not plausible) in actual work, we will assume that all Bayesian estimated
