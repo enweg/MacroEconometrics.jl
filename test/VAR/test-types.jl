@@ -56,3 +56,14 @@ end
     data = TSFrame(randn(length(dates), n), dates)
     @test_throws ErrorException VAR(data, p)
 end
+
+@testset "VAR no data" begin
+    n = 5
+    p = 10
+    B = FixedEstimated(randn(n, n*p))    
+    b0 = FixedEstimated(randn(n))
+    Σ = FixedEstimated(randn(n, n))
+    # only used to check if constructor works
+    # there is nothing here to check yet
+    VAR(n, p, B, b0, Σ)
+end

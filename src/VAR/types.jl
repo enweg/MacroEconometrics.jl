@@ -10,7 +10,7 @@ function is_stable(var::AbstractVectorAutoregression) end
 
 const FREQUENCIES = [:day, :month, :quarter, :year]
 
-"""
+@doc """
      Check whether data is of a regular and known frequency.
 
 ## Arguments
@@ -27,7 +27,9 @@ function _check_regularity_data(data::TSFrame)
 end
 
 @doc raw"""
-    VAR model
+    VAR(n::Int, p::Int, B::E, b0::E, Σ::E, data::TSFrame) where {E<:Estimated}
+    VAR(data::TSFrame, p; type::Type{T}=BayesianEstimated)
+    VAR(n::Int, p::Int, B::FixedEstimated{T}, b0::FixedEstimated{T}, Σ::FixedEstimated{T}) where {T}
 
 Every VAR model is of the form
 
@@ -55,11 +57,11 @@ y_{t-p}')'``.
 
 - `n::Int`: Number of variables in the VAR.
 - `p::Int`: Numbe of lags; See the equations above.
-- `B::E<:Estimated`: Lag coefficient matrix; See the equations above; Should be
+- `B::Union{Nothing, E<:Estimated}`: Lag coefficient matrix; See the equations above; Should be
   a subtype of `Estimated`. 
-- `b0::E<:Estimated`: Intercept vector; See equations above.
-- `Σ::E<:Estimated`: Covariance matrix of disturbance terms; See equation above.
-- `data::TSFrame`: A time series data frame containing the data used for the
+- `b0::Union{Nothing, E<:Estimated}`: Intercept vector; See equations above.
+- `Σ::Union{Nothing, E<:Estimated}`: Covariance matrix of disturbance terms; See equation above.
+- `data::Union{Nothing, TSFrame}`: A time series data frame containing the data used for the
   VAR. Observations should be regularly spaced.
 
 """
@@ -70,7 +72,7 @@ mutable struct VAR{E<:Estimated}
     b0::Union{Nothing, E}
     Σ::Union{Nothing, E}
 
-    data::TSFrame
+    data::Union{Nothing, TSFrame}
 
     function VAR(n::Int, p::Int, B::E, b0::E, Σ::E, data::TSFrame) where {E<:Estimated}
         # check if data is regular. VAR models are only appropriate for regularly spaced data
@@ -89,5 +91,8 @@ mutable struct VAR{E<:Estimated}
         # estimates do not yet exist, so set to zero
         B = b0 = Σ = nothing
         return new{type}(n, p, B, b0, Σ, data)
+    end
+    function VAR(n::Int, p::Int, B::FixedEstimated{T}, b0::FixedEstimated{T}, Σ::FixedEstimated{T}) where {T}
+        return new{FixedEstimated{T}}(n, p, B, b0, Σ, nothing)
     end
 end
