@@ -8,24 +8,6 @@ function irf(var::AbstractVectorAutoregression, horizon, args...; kwargs...) end
 function make_companion_matrix(var::AbstractVectorAutoregression) end
 function is_stable(var::AbstractVectorAutoregression) end
 
-const FREQUENCIES = [:day, :month, :quarter, :year]
-
-@doc """
-     Check whether data is of a regular and known frequency.
-
-## Arguments
-
-- `data::TSFrame`: Time series data
-"""
-function _check_regularity_data(data::TSFrame) 
-    for freq in FREQUENCIES
-        if isregular(data, freq)
-            return true
-        end
-    end
-    return false
-end
-
 @doc raw"""
     VAR(n::Int, p::Int, B::E, b0::E, Σ::E, data::TSFrame) where {E<:Estimated}
     VAR(data::TSFrame, p; type::Type{T}=BayesianEstimated)

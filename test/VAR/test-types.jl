@@ -1,17 +1,3 @@
-@testset "Check regular" begin
-    n = 3
-    dates = Date("1996-11-19"):Quarter(1):Date("2023-03-30")
-    data = TSFrame(randn(length(dates), n), dates)    
-    # data should be regular
-    @test MacroEconometrics._check_regularity_data(data)
-
-    dates = vcat(dates[1:3], dates[5:end])
-    data = TSFrame(randn(length(dates), n), dates)
-    # data should not be regular
-    @test !MacroEconometrics._check_regularity_data(data)
-end
-
-
 @testset "VAR type all information" begin
     n = 3
     p = 2
