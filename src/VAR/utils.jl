@@ -49,7 +49,7 @@ Thus, ``B`` is a ``np\times np`` matrix.
 ## References
 
 - Kilian, L., & Lütkepohl, H. (2017). Structural Vector Autoregressive Analysis:
-(1st ed.). Cambridge University Press. https://doi.org/10.1017/9781108164818
+  (1st ed.). Cambridge University Press. https://doi.org/10.1017/9781108164818
 
 
 """
