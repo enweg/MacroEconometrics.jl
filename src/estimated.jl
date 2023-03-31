@@ -39,7 +39,7 @@ Base.broadcasted(f, x::V, fe::FixedEstimated{T}) where {V, T} = Base.broadcasted
 
 
 """
-Since conjugacy is incredible rare and often not actually plausible (the priors
+Since conjugacy is incredibly rare and often not actually plausible (the priors
 are not plausible) in actual work, we will assume that all Bayesian estimated
 quantities are just samples, and can thus be put in an array. Additional meta
 data, such as warning information during sampling, etc can be put in the
@@ -55,7 +55,7 @@ metadata field.
 
 - `value::Array{T}`: The actual values of the estimated quantity. Should be an
   Array; If multiple chains have been used, then the chains should be stacked
-  along the third dimension
+  along the last dimension
 - `metadata::M`: Any additional data that one wishes to save relating to the
   estimation. This could be warnings from the sampling algorithms, etc.
 """
