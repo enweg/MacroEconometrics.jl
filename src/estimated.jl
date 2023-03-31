@@ -55,7 +55,10 @@ metadata field.
 
 - `value::Array{T}`: The actual values of the estimated quantity. Should be an
   Array; If multiple chains have been used, then the chains should be stacked
-  along the last dimension
+  along the last dimension; That is, if only a single chain is being used, then
+  the last dimension should be of length 1. So for a matrix B that is n×n, we
+  would have an array of dimensions n×n×d×c where d are the number of draws, and
+  c is the number of chains.
 - `metadata::M`: Any additional data that one wishes to save relating to the
   estimation. This could be warnings from the sampling algorithms, etc.
 """
@@ -75,3 +78,4 @@ end
 
 Base.broadcasted(f, be::BayesianEstimated{T, M}, args...) where {T, M} = Base.broadcasted(f, be.value, args...)
 Base.broadcasted(f, x::V, be::BayesianEstimated{T, M}) where {V, T, M} = Base.broadcasted(f, x, be.value)
+Base.mapslices(f, be::BayesianEstimated{T, M}; dims=[ndims(be)-1, ndims(be)]) where {T, M} = Base.mapslices(f, be.value; dims=dims)
