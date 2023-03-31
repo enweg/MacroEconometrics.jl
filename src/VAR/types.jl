@@ -6,6 +6,26 @@ function estimate!(var::AbstractVectorAutoregression, method::AbstractVAREstimat
 function predict(var::AbstractVectorAutoregression, periods, args...; kwargs...) end
 function irf(var::AbstractVectorAutoregression, horizon, args...; kwargs...) end
 function make_companion_matrix(var::AbstractVectorAutoregression) end
+
+@doc """
+    is_stable(var::AbstractVectorAutoregression)
+
+Check whether the VAR is stable. 
+
+Given a companionmatrix C of a VAR, the VAR is considered stable if and only if
+all eigenvalues of C are less than unity in absolute value.  
+
+# Arguments
+
+- `var::Estimated`: The VAR model
+
+# References
+
+- Kilian, L., & Lütkepohl, H. (2017). Structural Vector Autoregressive Analysis:
+  (1st ed.). Cambridge University Press. https://doi.org/10.1017/9781108164818
+
+
+"""
 function is_stable(var::AbstractVectorAutoregression) end
 
 @doc raw"""
@@ -82,10 +102,17 @@ mutable struct VAR{E<:Estimated}
     end
 end
 
+@doc """
+    make_companion_matrix(var::VAR{FixedEstimated{T}}) where {T}
+    make_companion_matrix(var::VAR{BayesianEstimated{T, M}}) where {T, M}
+
+Make the companion matrix corresponding to a VAR model. In case of Bayesian
+estimated models, the companion matrix is constructed for each draw in each
+chain.
+"""
 function make_companion_matrix(var::VAR{FixedEstimated{T}}) where {T}
     return make_companion_matrix(var.B.value)
 end
-
 function make_companion_matrix(var::VAR{BayesianEstimated{T, M}}) where {T, M}
     # This should always be four dimensional. 
     if ndims(var.B) != 4
@@ -93,3 +120,22 @@ function make_companion_matrix(var::VAR{BayesianEstimated{T, M}}) where {T, M}
     end
     return mapslices(make_companion_matrix, var.B.value; dims=[1, 2])
 end
+
+function is_stable(var::VAR{FixedEstimated{T}}) where {T}
+    C = make_companion_matrix(var)
+    return maximum(abs.(eigen(C).values)) < 1.0
+end
+
+@doc """
+    is_stable(var::VAR{BayesianEstimated{T, M}}) where {T, M}
+
+In case of Bayesian estimated VARs, the model is considered stable if and only
+if the VAR is stable for all parameter draws. As such, a rather strong view is
+taken here. 
+"""
+function is_stable(var::VAR{BayesianEstimated{T, M}}) where {T, M}
+    C = make_companion_matrix(var)
+    stable_tensor = mapslices(x -> maximum(abs.(eigen(x).values)) < 1.0, C; dims=[1, 2])
+    return all(stable_tensor)
+end
+    

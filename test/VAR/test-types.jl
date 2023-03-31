@@ -90,3 +90,37 @@ end
         @test all(C_compare .== C_bayes[:, :, i, j])
     end
 end
+
+@testset "VAR is_stable" begin
+    n = 2
+    p = 1
+    B = [0.5 0.3; 0.2 0.5]
+    b0 = [0.0, 0.0]
+    Σ = [1.0 0.0; 0.0 1.0]
+
+    # FixedEstimated
+    B_fixed = FixedEstimated(B)
+    b0_fixed = FixedEstimated(b0)
+    Σ_fixed = FixedEstimated(Σ)
+    model_fixed = VAR(n, p, B_fixed, b0_fixed, Σ_fixed)
+    # Should be stable
+    @test is_stable(model_fixed)
+    # Should no-longer be stable
+    model_fixed.B[1, 1] = 10.0
+    @test !is_stable(model_fixed)
+
+    # BayesianEstimated
+    B = [0.5 0.3; 0.2 0.5]
+    b0 = [0.0, 0.0]
+    Σ = [1.0 0.0; 0.0 1.0]
+    B_bayes = cat([B for _ in 1:3]...; dims=3)
+    B_bayes = BayesianEstimated(reshape(B_bayes, size(B_bayes)..., 1), nothing)
+    b0_bayes = BayesianEstimated(randn(n, 3, 1), nothing)
+    Σ_bayes = BayesianEstimated(randn(n, n, 3, 1), nothing)
+    model_bayes = VAR(n, p, B_bayes, b0_bayes, Σ_bayes)
+    # should be stable since all slices are stable (they are the same)
+    @test is_stable(model_bayes)
+    # Should not be stable
+    B_bayes[1, 1, 1, 1] = 10.0
+    @test !is_stable(model_bayes)
+end
