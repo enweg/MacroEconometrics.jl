@@ -2,6 +2,25 @@ abstract type AbstractVectorAutoregression end
 abstract type AbstractVAREstimator end
 
 function simulate!(var::AbstractVectorAutoregression, periods::Int, args...; kwargs...) end
+"""
+    estimate!(var::AbstractVectorAutoregression, method::AbstractVAREstimator, args...; kwargs...)
+
+Estimate a VAR using `method`.
+
+## Methods
+
+Depending on the type of VAR, the methods can differ. Methods can also differ
+with regard to which statistical paradigm they are following. Some methods will
+estimate the VAR using Frequentist methods, while others will estimate the VAR
+using Bayesian methods. 
+
+### Standard Gaussian VAR: [`VAR`](@ref)
+
+This is represented by a standard [`VAR`](@ref) type. Methods currently include
+
+- [`OlsVAREstimator`](@ref)
+
+"""
 function estimate!(var::AbstractVectorAutoregression, method::AbstractVAREstimator, args...; kwargs...) end
 function predict(var::AbstractVectorAutoregression, periods, args...; kwargs...) end
 function irf(var::AbstractVectorAutoregression, horizon, args...; kwargs...) end

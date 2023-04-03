@@ -1,11 +1,26 @@
 
-# TODO: Documentation
+"""
+    OlsVAREstimator(intercept::Bool=true; confint_level=0.95)
+
+OLS estimator for a VAR
+
+Estimate VAR coefficients equation by equation using OLS. This uses the `lm` method in `GLS.jl`
+
+## Fields
+
+- `intercept::Bool`: Should an intercept be estimated? 
+- `confint_level::Real`: Confidence level; Confidence intervals are symmetric and are using the asymptotic normal approximation. 
+
+## References
+
+- Lütkepohl, H. (2005). New introduction to multiple time series analysis. New York: Springer. (page 72 below equation 3.2.12)
+
+"""
 struct OlsVAREstimator <: AbstractVAREstimator 
     intercept::Bool
     confint_level::Real
     OlsVAREstimator(intercept::Bool=true; confint_level=0.95) = new(intercept, confint_level)
 end
-# TODO: tests and reference
 function _ols_estimate_VAR_eq(var::VAR{E}, equation::Int, intercept::Bool=true, confint_level::Real=0.95) where {E <: FrequentistEstimated}
     variable = names(var.data)[equation]
     Y_lag = _lag_ts(var.data, 0:var.p)
@@ -24,8 +39,6 @@ function _ols_estimate_VAR_eq(var::VAR{E}, equation::Int, intercept::Bool=true, 
     resids = residuals(m)
     return coefs, ci_lower, ci_upper, resids
 end
-# TODO: tests
-# TODO: Documentation
 function estimate!(var::VAR{E}, method::OlsVAREstimator = OlsVAREstimator(), args...; kwargs...) where {E<:FrequentistEstimated}
     estimates = [_ols_estimate_VAR_eq(var, i, method.intercept, method.confint_level) for i in 1:var.n]
     coefs = reduce(vcat, [e[1]' for e in estimates])
