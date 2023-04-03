@@ -102,8 +102,8 @@ indexing.
 """
 struct FrequentistEstimated{T, M} <: Estimated
   value::Array{T}
-  ci_lower::Array{T}
-  ci_upper::Array{T}
+  ci_lower::Union{Nothing, Array{T}}
+  ci_upper::Union{Nothing, Array{T}}
   metadata::M
 
   function FrequentistEstimated(value::Array{T}, ci_lower::Array{T}, ci_upper::Array{T}, metadata::M) where {T, M}
@@ -113,6 +113,10 @@ struct FrequentistEstimated{T, M} <: Estimated
     @assert all(ci_lower .<= value)
 
     return new{T, M}(value, ci_lower, ci_upper, metadata)
+  end
+  function FrequentistEstimated(value::Array{T}, metadata::M) where {T, M}
+    # new confidence intervals are given
+    return new{T, M}(value, nothing, nothing, metadata)
   end
 end
 @forward FrequentistEstimated.value Base.getindex, Base.length, Base.size, Base.ndims, 
