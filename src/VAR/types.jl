@@ -88,7 +88,7 @@ mutable struct VAR{E<:Estimated}
         if !regular
             throw(ErrorException("VAR has no known frequency"))
         end
-        n = nrow(data)
+        n = ncol(data)
         # estimates do not yet exist, so set to zero
         B = b0 = Σ = nothing
         return new{type}(n, p, B, b0, Σ, data)
