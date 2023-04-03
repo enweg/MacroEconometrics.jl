@@ -18,7 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.6'
+          # TSFrames currently has a problem with 1.6
+          # - '1.6'
           - '1.7'
           - '1.8'
           - 'nightly'
