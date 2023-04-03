@@ -10,6 +10,7 @@ using Random, Distributions
 
 export BayesianEstimated, Estimated
 export FixedEstimated
+export FrequentistEstimated
 include("estimated.jl")
 
 export AbstractVectorAutoregression, AbstractVAREstimator

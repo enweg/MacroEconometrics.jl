@@ -79,3 +79,50 @@ end
 Base.broadcasted(f, be::BayesianEstimated{T, M}, args...) where {T, M} = Base.broadcasted(f, be.value, args...)
 Base.broadcasted(f, x::V, be::BayesianEstimated{T, M}) where {V, T, M} = Base.broadcasted(f, x, be.value)
 Base.mapslices(f, be::BayesianEstimated{T, M}; dims=[ndims(be)-1, ndims(be)]) where {T, M} = Base.mapslices(f, be.value; dims=dims)
+
+"""
+Frequentist estimations usually consist of a point estimate and a confidence
+interval. If Bootstrapping is used, the confidence interval must not be
+symmetric. As such, having a separate lower and upper CI allows for asymmetric
+CIs. 
+
+## Behaviour
+
+Most operations are directly forwarded to the value field. For example,
+additiona, subtraction, ... are all forwarded to the `value` field. So is
+indexing. 
+
+## Fields
+
+- `value::Array{T}`: The point estimates. 
+- `ci_lower::Array{T}`: The lower end of the CI for each value in `values`
+- `ci_upper::Array{T}`: The upper end of the CI for each value in `values`
+- `metadata::M`: Any metadata. Should, for example, include the level of the CI.
+
+"""
+struct FrequentistEstimated{T, M} <: Estimated
+  value::Array{T}
+  ci_lower::Array{T}
+  ci_upper::Array{T}
+  metadata::M
+
+  function FrequentistEstimated(value::Array{T}, ci_lower::Array{T}, ci_upper::Array{T}, metadata::M) where {T, M}
+    @assert all(size(value) .== size(ci_lower))
+    @assert all(size(value) .== size(ci_upper))
+    @assert all(ci_lower .<= ci_upper)
+    @assert all(ci_lower .<= value)
+
+    return new{T, M}(value, ci_lower, ci_upper, metadata)
+  end
+end
+@forward FrequentistEstimated.value Base.getindex, Base.length, Base.size, Base.ndims, 
+    Base.first, Base.last, Base.lastindex, Base.firstindex, Base.setindex!, 
+    Base.eltype, Base.eachslice, Base.eachcol, Base.eachrow
+ops = [:+, :-, :*, :/]
+for op in ops
+    eval(:(Base.$op(x::V, be::FrequentistEstimated{T, M}) where {V,T, M} = Base.$op(x, be.value)))
+    eval(:(Base.$op(be::FrequentistEstimated{T, M}, args...) where {T, M} = Base.$op(be.value, args...)))
+end
+Base.broadcasted(f, be::FrequentistEstimated{T, M}, args...) where {T, M} = Base.broadcasted(f, be.value, args...)
+Base.broadcasted(f, x::V, be::FrequentistEstimated{T, M}) where {V, T, M} = Base.broadcasted(f, x, be.value)
+Base.mapslices(f, be::FrequentistEstimated{T, M}; dims=[ndims(be)-1, ndims(be)]) where {T, M} = Base.mapslices(f, be.value; dims=dims)
