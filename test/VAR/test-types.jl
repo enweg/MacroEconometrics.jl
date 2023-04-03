@@ -130,9 +130,9 @@ end
     # If the first one does not indicate any problems, then we will return 
     # a pass, otherwise we try again. If the test fails again then this is
     # likely due to an actual implementation problem. 
+    rng = StableRNG(123)
     pass = false
     for _ in 1:2
-        rng = StableRNG(123)
         n = 2
         p = 2
         B = FixedEstimated(0.5randn(rng, n, n*p))
