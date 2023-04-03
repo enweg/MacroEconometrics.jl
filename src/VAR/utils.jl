@@ -1,3 +1,5 @@
+import TSFrames.lag
+
 const FREQUENCIES = [:day, :month, :quarter, :year]
 @doc """
      Check whether data is of a regular and known frequency.
@@ -62,6 +64,16 @@ function make_companion_matrix(B::AbstractMatrix{T}) where {T}
     return companion
 end
 
+"""
+
+If lag_value is a range or a vector of lags, then a vector of TSFrames will be
+returned where each element of the vector is one lagged TSFrame.
+"""
+function lag(ts::TSFrame, lag_value::Union{OrdinalRange{T, T}, AbstractVector{T}}) where {T}
+    lags = collect(lag_value)
+    dfs = [TSFrames.lag(ts, l) for l in lags]
+    return dfs
+end
 """
 
 Create a lagged TSFrame.
