@@ -9,3 +9,4 @@ using GLM, StatsModels
 include("test-estimated.jl")
 include("./VAR/test-utils.jl")
 include("./VAR/test-types.jl")
+include("./VAR/test-estimation.jl")
