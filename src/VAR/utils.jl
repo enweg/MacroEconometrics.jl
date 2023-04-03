@@ -61,3 +61,34 @@ function make_companion_matrix(B::AbstractMatrix{T}) where {T}
     companion = vcat(B, companion_lower)
     return companion
 end
+
+"""
+
+Create a lagged TSFrame.
+
+# Arguments
+
+- `ts::TSFrame`: TSFrame to lag
+- `lag_value::Union{OrdinalRange{T, T}, AbstractVector{T}}`: lags
+
+# Keyword Arguments
+
+- `name_attach::String="__L"`: String to attach to variable names
+- `remove_fist::Bool=true`: Remove the first few rows tha will be `missing` for
+  the lagged variables?
+"""
+function _lag_ts(
+    ts::TSFrame, 
+    lag_value::Union{OrdinalRange{T, T}, AbstractVector{T}}; 
+    name_attach::String="__L", 
+    remove_first::Bool=true
+) where {T}
+    lags = collect(lag_value)
+    dfs = lag(ts, lag_value)
+    dfs = [TSFrames.rename!(dfs[i], names(dfs[i]) .* "$(name_attach)$(l)") for (i,l) in zip(eachindex(dfs), lags)]
+    df = join(dfs...; jointype=:JoinAll)
+    if remove_first
+        df = df[maximum(lags)+1:end]
+    end
+    return df
+end
