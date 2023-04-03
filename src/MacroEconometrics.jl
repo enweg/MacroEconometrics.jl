@@ -19,5 +19,9 @@ export lag
 export VAR
 include("./VAR/utils.jl")
 include("./VAR/types.jl")
+include("./VAR/stability_checks.jl")
+include("./VAR/companion_matrix.jl")
+include("./VAR/simulation.jl")
+
 
 end
