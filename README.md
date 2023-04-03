@@ -8,14 +8,14 @@
 
 **Basics**
 
-- [ ] VAR model
-  - [ ] Simultion
+- [x] VAR model
+  - [x] Simulation
   - [ ] Bayesian
     - [ ] Minnesota
     - [ ] SSVS
     - [ ] Indpendent Normal-Wishart
   - [ ] Frequentist
-    - [ ] LS
+    - [x] LS
     - [ ] Bootstrap CI
   - [ ] Forecasting
 
