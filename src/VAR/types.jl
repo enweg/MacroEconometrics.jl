@@ -1,7 +1,8 @@
-abstract type AbstractVectorAutoregression end
+abstract type AbstractVectorAutoregression <: MacroEconometricModel end
 abstract type AbstractVAREstimator end
 
 function simulate!(var::AbstractVectorAutoregression, periods::Int, args...; kwargs...) end
+
 """
     estimate!(var::AbstractVectorAutoregression, method::AbstractVAREstimator, args...; kwargs...)
 
@@ -85,7 +86,7 @@ y_{t-p}')'``.
   VAR. Observations should be regularly spaced.
 
 """
-mutable struct VAR{E<:Estimated}
+mutable struct VAR{E<:Estimated}<:AbstractVectorAutoregression
     n::Int
     p::Int
     B::Union{Nothing, E}

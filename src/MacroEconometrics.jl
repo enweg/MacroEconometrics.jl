@@ -10,6 +10,9 @@ using StatsModels: @formula, term
 using Statistics
 
 # Write your package code here.
+export MacroEconometricModel
+export AbstractIdentificationMethod
+include("./types.jl")
 
 export BayesianEstimated, Estimated
 export FixedEstimated
@@ -27,6 +30,10 @@ include("./VAR/stability_checks.jl")
 include("./VAR/companion_matrix.jl")
 include("./VAR/simulation.jl")
 include("./VAR/estimation.jl")
+
+
+export ImpulseResponseFunction, StructuralImpulseResponseFunction
+include("./IRF/types.jl")
 
 
 end

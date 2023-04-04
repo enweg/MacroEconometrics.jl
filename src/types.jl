@@ -1,0 +1,2 @@
+abstract type MacroEconometricModel end
+abstract type AbstractIdentificationMethod end
