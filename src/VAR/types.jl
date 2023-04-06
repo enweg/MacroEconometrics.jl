@@ -20,6 +20,7 @@ using Bayesian methods.
 This is represented by a standard [`VAR`](@ref) type. Methods currently include
 
 - [`OlsVAREstimator`](@ref)
+- [`IndependentNormalWishart`](@ref)
 
 """
 function estimate!(var::AbstractVectorAutoregression, method::AbstractVAREstimator, args...; kwargs...) end
