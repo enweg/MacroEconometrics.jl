@@ -13,7 +13,7 @@
   - [ ] Bayesian
     - [ ] Minnesota
     - [ ] SSVS
-    - [ ] Indpendent Normal-Wishart
+    - [x] Indpendent Normal-Wishart
   - [ ] Frequentist
     - [x] LS
     - [ ] Bootstrap CI
