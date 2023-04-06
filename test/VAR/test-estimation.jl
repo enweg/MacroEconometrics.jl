@@ -25,3 +25,77 @@
     # asymptotically
     @test inside_ci/comparisons > 0.9
 end
+
+@testset "VAR Independent Normal Wishart" begin
+
+    # Testing the construction of Zts 
+    data = reshape(1:10, 5, :)
+    dates = Dates.Date("1996/11/19", dateformat"yyyy/mm/dd")
+    dates = dates:Day(1):(dates + 4*Day(1))
+    ts = TSFrame(data, dates)
+    model = VAR(ts, 2)
+
+    Z1 = [2 7 1 6 0 0 0 0; 0 0 0 0 2 7 1 6]
+    Z2 = [3 8 2 7 0 0 0 0; 0 0 0 0 3 8 2 7]
+    Z3 = [4 9 3 8 0 0 0 0; 0 0 0 0 4 9 3 8]
+    Zts = MacroEconometrics._construct_Zts(model, false)
+    @test all(Z1 .== Zts[1])
+    @test all(Z2 .== Zts[2])
+    @test all(Z3 .== Zts[3])
+
+    # Testing the construction of Zts
+    Z1 = [1 2 7 1 6 0 0 0 0 0; 0 0 0 0 0 1 2 7 1 6]
+    Z2 = [1 3 8 2 7 0 0 0 0 0; 0 0 0 0 0 1 3 8 2 7]
+    Z3 = [1 4 9 3 8 0 0 0 0 0; 0 0 0 0 0 1 4 9 3 8]
+    Zts = MacroEconometrics._construct_Zts(model, true)
+    @test all(Z1 .== Zts[1])
+    @test all(Z2 .== Zts[2])
+    @test all(Z3 .== Zts[3])
+
+    # Testing the construction of the posterior distribution parameters
+    intercept = true
+    nparams = model.n^2*model.p + intercept*model.n
+    prior_β = zeros(nparams)
+    prior_V = diagm(ones(nparams))
+    prior_nu = 10
+    prior_S = diagm(ones(model.n))
+
+    initial_Σinv = diagm(ones(model.n))
+    initial_β = zeros(nparams)
+
+    yts = eachrow(Matrix(model.data[model.p+1:end]))
+    V_bar, beta_bar = MacroEconometrics._get_inw_beta_params(initial_Σinv, prior_β, prior_V, Zts, yts)
+    yts = collect(yts)
+    V_bar_manual = inv(I + Z1'*Z1 + Z2'*Z2 + Z3'*Z3)
+    b_bar_manual = V_bar_manual*(Z1'*yts[1] + Z2'*yts[2] + Z3'*yts[3])
+    @test all(V_bar .== V_bar_manual)
+    @test all(beta_bar .== b_bar_manual)
+
+    yts = eachrow(Matrix(model.data[model.p+1:end]))
+    S_bar, nu_bar = MacroEconometrics._get_inw_Sigma_params(initial_β, prior_S, prior_nu, Zts, yts)
+    yts = collect(yts)
+    nu_bar_manual = 3 + prior_nu
+    S_bar_manual = prior_S + (yts[1]-Z1*initial_β)*(yts[1]-Z1*initial_β)' + (yts[2]-Z2*initial_β)*(yts[2]-Z2*initial_β)' + (yts[3]-Z3*initial_β)*(yts[3]-Z3*initial_β)'
+    @test nu_bar == nu_bar_manual
+    @test all(S_bar .== S_bar_manual)
+
+    # All that is left is to test the actual sampling. Since the sampling
+    # procedure is stochastic it is difficult to test it. Everything that is
+    # non-stoachstic in the procedure has been tested above though, and thus, we
+    # will here only test whether the sampling is actually running. We will not
+    # compare the values to anything. 
+    rng = StableRNG(123)
+    n = 3
+    p = 3
+    B = FixedEstimated(0.2*randn(rng, n, n*p))
+    b0 = FixedEstimated(rand(rng, n))
+    Σ = FixedEstimated(rand(rng, Wishart(n+1, diagm(ones(n)))))
+    model_sim = VAR(n, p, B, b0, Σ)    
+    simulate!(model_sim, 500; rng = rng)
+
+    intercept = true
+    n_params = model_sim.n^2*model_sim.p + model_sim.n
+    method = IndependentNormalWishart(zeros(n_params), 10*diagm(ones(n_params)), diagm(ones(model_sim.n)), model_sim.n + 1.0, intercept)
+    model_bayes = VAR(model_sim.data, p; type=BayesianEstimated)
+    model_bayes = estimate!(model_bayes, method, 1000; rng = rng)
+end
