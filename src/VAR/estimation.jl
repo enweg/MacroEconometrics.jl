@@ -182,11 +182,11 @@ end
 
 Crate the mean and covariance of a minnesota prior on the coefficients of a VAR.
 These can then be used as the prior mean anf variance of the VAR coefficients in
-the [IndependentNormalWishart](@ref) prior.
+the [`IndependentNormalWishart`](@ref) prior.
 
 ## Arguments
 
-- `var::VAR{<:Estimated}`: a [VAR](@ref) model.
+- `var::VAR{<:Estimated}`: a [`VAR`](@ref) model.
 - `λ::<:Real`: prior standard deviation on the first own lag. 
 - `θ::<:Real`: relative tightness of the prior standard deviation in other lags.
   0 < θ < 1
