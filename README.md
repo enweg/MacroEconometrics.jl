@@ -11,7 +11,7 @@
 - [x] VAR model
   - [x] Simulation
   - [ ] Bayesian
-    - [ ] Minnesota
+    - [x] Minnesota
     - [ ] SSVS
     - [x] Indpendent Normal-Wishart
   - [ ] Frequentist
