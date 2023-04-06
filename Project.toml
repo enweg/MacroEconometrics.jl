@@ -21,6 +21,7 @@ TSFrames = "9f90e835-9451-4aaa-bcb1-743a1b8d2f84"
 TinyGibbs = "69381cfd-d032-43bc-afd6-efe925dccc54"
 
 [compat]
+MacroTools = "0.5"
 julia = "1"
 
 [extras]
