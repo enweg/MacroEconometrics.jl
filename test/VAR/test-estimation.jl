@@ -99,3 +99,61 @@ end
     model_bayes = VAR(model_sim.data, p; type=BayesianEstimated)
     model_bayes = estimate!(model_bayes, method, 1000; rng = rng)
 end
+
+@testset "Minnesota paramters" begin
+    n = 2
+    p = 3
+    intercept = true
+    λ = 1.5
+    θ = 0.2
+    mean_first_own_lag=1.0
+    mean_other_lags=0.0
+    mean_intercept=0.0
+    variance_intercept=10.0
+
+    rng = StableRNG(123)
+    data = randn(rng, 100, n)
+    dates = Dates.Date("1996/11/19", dateformat"yyyy/mm/dd")
+    dates = dates:Day(1):(dates + Day(99))
+    ts = TSFrame(data, dates)
+    sigmas = sqrt.(vec(Statistics.var(data; dims=1)))
+    model = VAR(ts, p; type=BayesianEstimated)
+
+    b_minnesota, V_minnesota = create_minnesota_params(
+        model,
+        λ,
+        θ;
+        mean_first_own_lag=mean_first_own_lag,
+        mean_other_lags=mean_other_lags,
+        include_intercept=intercept,
+        mean_intercept=mean_intercept,
+        variance_intercept=variance_intercept
+    )
+
+    b_manual = [
+        mean_intercept, mean_intercept, mean_first_own_lag, mean_other_lags, 
+        mean_other_lags, mean_first_own_lag, mean_other_lags, mean_other_lags, 
+        mean_other_lags, mean_other_lags, mean_other_lags, mean_other_lags, 
+        mean_other_lags, mean_other_lags
+    ]
+    V_diag_manual = [
+        variance_intercept,
+        variance_intercept, 
+        (λ/1)^2, 
+        (λ*θ*sigmas[2])^2/(1*sigmas[1])^2, 
+        (λ*θ*sigmas[1])^2/(1*sigmas[2])^2, 
+        (λ/1)^2, 
+        (λ/2)^2, 
+        (λ*θ*sigmas[2])^2/(2*sigmas[1])^2,
+        (λ*θ*sigmas[1])^2/(2*sigmas[2])^2, 
+        (λ/2)^2, 
+        (λ/3)^2, 
+        (λ*θ*sigmas[2])^2/(3*sigmas[1])^2, 
+        (λ*θ*sigmas[1])^2/(3*sigmas[2])^2, 
+        (λ/3)^2
+    ]
+    V_manual = Diagonal(V_diag_manual)
+
+    @test all(b_minnesota .== b_manual)
+    @test all(V_minnesota .≈ V_manual)
+end

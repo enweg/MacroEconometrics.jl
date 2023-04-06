@@ -32,7 +32,7 @@ include("./VAR/stability_checks.jl")
 include("./VAR/companion_matrix.jl")
 include("./VAR/simulation.jl")
 export OlsVAREstimator
-export IndependentNormalWishart
+export IndependentNormalWishart, create_minnesota_params
 include("./VAR/estimation.jl")
 
 

@@ -5,6 +5,7 @@ using TSFrames
 using LinearAlgebra, Distributions, Random
 using StableRNGs
 using GLM, StatsModels
+using Statistics
 
 include("test-estimated.jl")
 include("./VAR/test-utils.jl")
