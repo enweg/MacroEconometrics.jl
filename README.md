@@ -19,8 +19,8 @@
     - [ ] Bootstrap CI
   - [ ] Forecasting
 
-- [ ] SVAR model
-  - [ ] Simulation
+- [x] SVAR model
+  - [x] Simulation
   - [ ] Estimation --> Direct 
   - [ ] Identification
     - [ ] Cholesky

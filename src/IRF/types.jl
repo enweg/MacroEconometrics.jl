@@ -24,11 +24,10 @@ struct ImpulseResponseFunction{E<:Estimated,M<:MacroEconometricModel} <: Abstrac
     model::M
 end
 
-struct StructuralImpulseResponseFunction{E<:Estimated,M<:MacroEconometricModel,N<:AbstractIRFNormalisation,I<:AbstractIdentificationMethod} <: AbstractImpulseResponseFunction
+struct StructuralImpulseResponseFunction{E<:Estimated,M<:MacroEconometricModel,N<:AbstractIRFNormalisation} <: AbstractImpulseResponseFunction
     variables::Vector{Symbol}
     irfs::E
     model::M
     normalisation::N
-    identification::I
 end
 

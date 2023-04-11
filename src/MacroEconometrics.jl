@@ -28,6 +28,7 @@ export AbstractVectorAutoregression, AbstractVAREstimator
 export simulate!, estimate!, predict, irf, make_companion_matrix, is_stable
 export lag
 export VAR, SVAR
+export CholeskyVAR
 include("./VAR/utils.jl")
 include("./VAR/types.jl")
 include("./VAR/stability_checks.jl")
