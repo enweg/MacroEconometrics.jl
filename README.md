@@ -31,8 +31,8 @@
     - [ ] Proxy VAR
 
 - [ ] Impulse Response Functions
-  - [ ] Reduced Form
-    - [ ] From VAR
+  - [x] Reduced Form
+    - [x] From VAR
   - [ ] Structural
     - [ ] From SVAR
     - [ ] Identification from VAR
