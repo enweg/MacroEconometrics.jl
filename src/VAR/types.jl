@@ -25,7 +25,6 @@ This is represented by a standard [`VAR`](@ref) type. Methods currently include
 """
 function estimate!(var::AbstractVectorAutoregression, method::AbstractVAREstimator, args...; kwargs...) end
 function predict(var::AbstractVectorAutoregression, periods, args...; kwargs...) end
-function irf(var::AbstractVectorAutoregression, horizon, args...; kwargs...) end
 function make_companion_matrix(var::AbstractVectorAutoregression) end
 
 @doc """

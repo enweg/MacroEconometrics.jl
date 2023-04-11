@@ -21,19 +21,21 @@ export FixedEstimated
 export FrequentistEstimated
 include("estimated.jl")
 
-export ImpulseResponseFunction, StructuralImpulseResponseFunction
-include("./IRF/types.jl")
 
 export AbstractVectorAutoregression, AbstractVAREstimator
 export simulate!, estimate!, predict, irf, make_companion_matrix, is_stable
 export lag
 export VAR, SVAR
-export CholeskyVAR
 include("./VAR/utils.jl")
 include("./VAR/types.jl")
 include("./VAR/stability_checks.jl")
 include("./VAR/companion_matrix.jl")
 include("./VAR/simulation.jl")
+
+export ImpulseResponseFunction, StructuralImpulseResponseFunction
+export to_impact_normalisation
+export CholeskyVAR
+include("./IRF/types.jl")
 include("./VAR/irf.jl")
 
 export OlsVAREstimator

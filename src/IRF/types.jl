@@ -31,7 +31,7 @@ struct StructuralImpulseResponseFunction{E<:Estimated,M<:MacroEconometricModel,N
     normalisation::N
 end
 
-"""
+@doc raw"""
 
 Move from covariance normalisation to impact normalisation. 
 
@@ -61,9 +61,9 @@ function to_impact_normalisation(sirfs::StructuralImpulseResponseFunction{E, M, 
   horizons = size(irfs, 3)-1
   for chain in axes(irfs, 5)
     for draw in axes(irfs, 4)
-      N = diagm(1 ./ diag(irfs[:, :, 1, draw, chain]))
+      Nn = diagm(1 ./ diag(irfs[:, :, 1, draw, chain]))
       for h in 0:horizons
-        irfs[:,:,h+1,draw,chain] = irfs[:,:,h+1,draw,chain] * N
+        irfs[:,:,h+1,draw,chain] = irfs[:,:,h+1,draw,chain] * Nn
       end
     end
   end
