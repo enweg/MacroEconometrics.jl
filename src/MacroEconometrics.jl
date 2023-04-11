@@ -27,7 +27,7 @@ include("./IRF/types.jl")
 export AbstractVectorAutoregression, AbstractVAREstimator
 export simulate!, estimate!, predict, irf, make_companion_matrix, is_stable
 export lag
-export VAR
+export VAR, SVAR
 include("./VAR/utils.jl")
 include("./VAR/types.jl")
 include("./VAR/stability_checks.jl")

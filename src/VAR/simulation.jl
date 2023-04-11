@@ -77,7 +77,8 @@ Simulate a Gaussian VAR.
 function simulate!(
     var::VAR{FixedEstimated{T}}, periods::Int; 
     burnin::Int=100, initial::AbstractVector{T}=zeros(T, var.n*var.p), 
-    start_date::Date=Dates.today(), frequency::DatePeriod=Dates.Quarter(1), 
+    start_date::Date=Dates.today(), 
+    frequency::DatePeriod=Dates.Quarter(1), 
     rng::Random.AbstractRNG=Random.MersenneTwister()
 ) where {T}
 
@@ -93,4 +94,53 @@ function simulate!(
     data = TSFrame(Y', start_date:frequency:(start_date+(periods-1)*frequency))
     var.data = data
     return var
+end
+
+"""
+
+Simulate a Gaussian SVAR. 
+
+# Arguments
+
+- `svar::SVAR{FixedEstimated{T}}`: A [`SVAR`](@ref) model having [`FixedEstimated`](@ref)
+  coefficients.
+- `periods::Int`: Number of periods to simulate the VAR for
+
+# Keyword Arguments
+
+- `burnin::Int=100`: Number of periods to use as burnin; The longer the burnin,
+  the less the dependence on the initial values. 
+- `initial::AbstractVector{T}=zeros(T, svar.n*svar.p)`: Initial values. Should be
+  in companion form, so a vector of length svar.n×svar.p
+- `start_date::Date=Dates.today()`: The simulated data will be stored in a
+  TSFrame including dates. Thus, we need a start date. 
+- `frequency::DatePeriod=Dates.Quarter(1)`: Frequency of data. 
+- `rng::Random.AbstractRNG=Random.MersenneTwister()`: Random Number Generator
+
+# Returns
+
+- Returns the same [`SVAR`](@ref) model. The `data` field in the SVAR model is overwritten
+  with he new simulated data.
+"""
+function simulate!(
+  svar::SVAR{FixedEstimated{T}}, 
+  periods::Int; 
+  burnin::Int=100, 
+  initial::AbstractVector{T}=zeros(T, svar.n*svar.p), 
+  start_date::Date=Dates.today(), 
+  frequency::DatePeriod=Dates.Quarter(1), 
+  rng::Random.AbstractRNG=Random.MersenneTwister()
+) where {T}
+
+  Ainv = inv(svar.A.value)
+  B = FixedEstimated(Ainv*svar.B.value)
+  Σ = FixedEstimated(Ainv * svar.Σ.value * Ainv')
+  b0 = FixedEstimated(Ainv * svar.b0.value)
+
+  var = VAR(svar.n, svar.p, B, b0, Σ)
+  simulate!(var, periods; burnin=burnin, initial=initial, start_date=start_date, frequency=frequency, rng=rng)
+
+  svar.data = var.data
+
+  return svar
 end
