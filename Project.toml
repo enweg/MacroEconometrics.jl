@@ -22,10 +22,5 @@ TinyGibbs = "69381cfd-d032-43bc-afd6-efe925dccc54"
 
 [compat]
 MacroTools = "0.5"
+TSFrames = "0.2"
 julia = "1"
-
-# [extras]
-# Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-# [targets]
-# test = ["Test"]
