@@ -121,23 +121,46 @@ struct IndependentNormalWishart{T} <: AbstractVAREstimator
 
     intercept::Bool
 end
-@tiny_gibbs function VAR_independent_normal_wishart(prior_β, prior_V, prior_S, prior_ν, Zts, yts)
-    V_bar, beta_bar = _get_inw_beta_params(Σinv, prior_β, prior_V, Zts, yts)
-    β ~ MultivariateNormal(beta_bar, Hermitian(V_bar))
+using Kronecker
+@tiny_gibbs function VAR_independent_normal_wishart(prior_β, prior_V, prior_S, prior_ν, Z, Y)
+    V_bar, beta_bar = _get_inw_beta_params_fast(Σinv, prior_β, prior_V, Z, Y)
+    β ~ MultivariateNormal(beta_bar, Symmetric(V_bar))
 
-    S_bar, nu_bar = _get_inw_Sigma_params(β, prior_S, prior_ν, Zts, yts)
+    S_bar, nu_bar = _get_inw_Sigma_params_fast(β, prior_S, prior_ν, Z, Y)
     S_bar = cholesky(S_bar)
     Σinv ~ Wishart(nu_bar, inv(S_bar))
 end
+function _get_inw_beta_params_fast(Σinv, prior_β, prior_V, Z, Y)
+    n = size(Σinv, 1)
+    t = floor(Int, size(Y, 1) / n)
+    It = Diagonal(diagm(ones(t)))
+    variance = kronecker(It, Σinv)
+    s = Z' * variance * Z
+    V_bar = inv(inv(prior_V) + s)
+    beta_bar = V_bar * (prior_V * prior_β + Z' * variance * Y)
+    return V_bar, beta_bar
+end
 function _get_inw_beta_params(Σinv, prior_β, prior_V, Zts, yts)
-    V_bar = inv(inv(prior_V) + sum([Zt' * Σinv * Zt for Zt in Zts]))
+    s = sum([Zt' * Σinv * Zt for Zt in Zts])
+    V_bar = inv(inv(prior_V) + s)
     beta_bar = V_bar * (prior_V * prior_β + sum([Zt' * Σinv * yt for (Zt, yt) in zip(Zts, yts)]))
     return V_bar, beta_bar
+end
+function _get_inw_Sigma_params_fast(β, prior_S, prior_ν, Z, Y)
+    n = size(prior_S, 1)
+    t = floor(Int, size(Y, 1) / n)
+    nu_bar = t + prior_ν
+    resids = reshape(Y - Z*β, n, :)
+    S_bar = prior_S + resids*resids'
+    return S_bar, nu_bar
 end
 function _get_inw_Sigma_params(β, prior_S, prior_ν, Zts, yts)
     nu_bar = length(yts) + prior_ν
     S_bar = prior_S + sum([(yt - Zt * β) * (yt - Zt * β)' for (yt, Zt) in zip(yts, Zts)])
     return S_bar, nu_bar
+end
+function _construct_Z(var::VAR{E}, intercept::Bool=true) where {E<:Estimated}
+    return reduce(vcat, _construct_Zts(var, intercept))
 end
 function _construct_Zts(var::VAR{E}, intercept::Bool=true) where {E<:Estimated}
     T = eltype(var.data[:, 1])
@@ -149,16 +172,31 @@ function _construct_Zts(var::VAR{E}, intercept::Bool=true) where {E<:Estimated}
     eye = diagm(ones(var.n))
     return [kron(eye, zt') for zt in eachrow(lag_matrix)]
 end
-function estimate!(var::VAR{E}, method::IndependentNormalWishart, N::Int, chains::Int=1; rng::Random.AbstractRNG=Random.default_rng(), kwargs...) where {E<:BayesianEstimated}
+"""
+For the sampling of VARs with Independent-Normal-Wishart priors ([`IndependentNormalWishart`](@ref)), the following
+additional arguments are introduced: 
+
+- `N::Int`: Number of samples
+- `chains::Int=1`: Number of chains
+
+Additionally, the following keyword arguments are introduced
+
+- `rng::Random.AbstractRNG=Random.default_rng()`: RNG to be used
+- `parallel::AbstractMCMC.AbstractMCMCEnsemble=AbstractMCMC.MCMCSeriel()`:
+  Ensemble algorithm. This allows sampling using multiple threads or processes.
+
+"""
+function estimate!(var::VAR{E}, method::IndependentNormalWishart, N::Int, chains::Int=1; rng::Random.AbstractRNG=Random.default_rng(), parallel::AbstractMCMC.AbstractMCMCEnsemble=AbstractMCMC.MCMCSerial(), kwargs...) where {E<:BayesianEstimated}
     yts = eachrow(Matrix(var.data[var.p+1:end]))
-    Zts = _construct_Zts(var, method.intercept)
+    Y = reduce(vcat, yts)
+    Z = _construct_Z(var, method.intercept)
     @unpack prior_β, prior_V, prior_S, prior_ν = method
     initial_values = Dict(
         :β => rand(rng, MultivariateNormal(prior_β, prior_V)),
         :Σinv => rand(rng, Wishart(prior_ν, prior_S))
     )
-    sampler = VAR_independent_normal_wishart(initial_values, prior_β, prior_V, prior_S, prior_ν, Zts, yts)
-    samples = sample(rng, sampler, AbstractMCMC.MCMCThreads(), N, chains; chain_type=Dict, kwargs...)
+    sampler = VAR_independent_normal_wishart(initial_values, prior_β, prior_V, prior_S, prior_ν, Z, Y)
+    samples = sample(rng, sampler, parallel, N, chains; chain_type=Dict, kwargs...)
     B = reshape(samples[:β], var.n * var.p + method.intercept, var.n, N, chains)
     B = permutedims(B, (2, 1, 3, 4))
     Σ = mapslices(inv, samples[:Σinv]; dims=[1, 2])
