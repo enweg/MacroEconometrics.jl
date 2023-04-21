@@ -219,7 +219,11 @@ end
     ) where {E<:Estimated,T}
 
 Crate the mean and covariance of a minnesota prior on the coefficients of a VAR.
-These can then be used as the prior mean anf variance of the VAR coefficients in
+The parameter vector stacks the parameters of each equation of the VAR. Thus, if
+B is the coefficient matrix of the VAR, being n×np+intercept, then the returned
+coefficient vector is vec(B').
+
+The returned values can then be used as the prior mean anf variance of the VAR coefficients in
 the [`IndependentNormalWishart`](@ref) prior.
 
 ## Arguments
@@ -269,38 +273,31 @@ function create_minnesota_params(
     for i in 1:var.n
         B_minnesota[i, i+include_intercept] = mean_first_own_lag
     end
-    b_minnesota = vec(B_minnesota)
+    b_minnesota = vec(B_minnesota')
 
-    # Creating Covariance matrix
-    # We first create a matrix that has the dimensions of B. To create the
-    # covariance matrix, we will then take the vec of that matrix and use it as
-    # the diagonal of the covariance matrix
-    V_diag = λ^2 * θ^2 * ones(T, var.n, var.n * var.p + include_intercept)
+
+    params_per_equation = var.n*var.p + include_intercept
+    V_B_form = λ^2*θ^2*ones(T, var.n, params_per_equation)
+    # sigmas of minnesota are chosen to be the unconditional variances
+    # TODO: some others choose the standard deviation of univariate AR regressions
     vars = vec(Statistics.var(Matrix(var.data); dims=1))
     for i in 1:var.n
         # Multiplying each row by the variance of that variable
-        V_diag[i, :] .*= vars[i]
-        for p in 1:var.p
-            # Cancelling out the θ in own lags
-            V_diag[i, var.n*(p-1) + i + include_intercept] /= θ^2
+        V_B_form[i, :] .*= vars[i]
+        # dividing by other variable sigmas
+        V_B_form[i, include_intercept+1:end] ./= repeat(vars, var.p)
+        # Cancelling out the θ^2 in own lags
+        own_lags = (i+include_intercept):var.n:params_per_equation
+        V_B_form[i, own_lags] ./= θ^2
+        # dividing by the lag squared
+        l2 = repeat(1:var.p; inner=var.n).^2
+        V_B_form[i, include_intercept+1:end] ./= l2
+        # overwriting the intercept variance
+        if include_intercept
+            V_B_form[i, 1] = variance_intercept
         end
     end
-    l = repeat(1:var.p, inner=var.n)
-    l = include_intercept ? vcat(1, l) : l
-    l = reshape(l, 1, :)
-    l = reduce(vcat, [l for _ in 1:var.n])
-    # Dividing by lag
-    V_diag ./= l .^ 2
-    # Dividing by sigma of other variables
-    vars = repeat(vars, var.p)
-    vars = reshape(vars, 1, :)
-    vars = reduce(vcat, [vars for _ in 1:var.n])
-    V_diag[:, include_intercept+1:end] ./= vars
-    # Overwriting the variance in intercept
-    if include_intercept
-        V_diag[:, 1] .= variance_intercept
-    end
-    V_minnesota = Diagonal(vec(V_diag))
+    V_minnesota = Diagonal(vec(V_B_form'))
 
     return b_minnesota, V_minnesota
 end

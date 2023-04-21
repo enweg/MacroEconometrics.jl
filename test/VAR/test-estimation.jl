@@ -100,10 +100,10 @@ end
     model_bayes = estimate!(model_bayes, method, 1000; rng = rng)
 end
 
-@testset "Minnesota paramters" begin
+@testset "Minnesota paramters intercept=$(intercept)" for intercept in [true, false]
     n = 2
     p = 3
-    intercept = true
+    # intercept = true
     λ = 1.5
     θ = 0.2
     mean_first_own_lag=1.0
@@ -131,27 +131,30 @@ end
     )
 
     b_manual = [
-        mean_intercept, mean_intercept, mean_first_own_lag, mean_other_lags, 
-        mean_other_lags, mean_first_own_lag, mean_other_lags, mean_other_lags, 
-        mean_other_lags, mean_other_lags, mean_other_lags, mean_other_lags, 
-        mean_other_lags, mean_other_lags
+        mean_intercept, mean_first_own_lag, mean_other_lags, mean_other_lags, mean_other_lags, mean_other_lags, mean_other_lags, 
+        mean_intercept, mean_other_lags, mean_first_own_lag, mean_other_lags, mean_other_lags, mean_other_lags, mean_other_lags
     ]
     V_diag_manual = [
-        variance_intercept,
         variance_intercept, 
         (λ/1)^2, 
-        (λ*θ*sigmas[2])^2/(1*sigmas[1])^2, 
         (λ*θ*sigmas[1])^2/(1*sigmas[2])^2, 
-        (λ/1)^2, 
         (λ/2)^2, 
-        (λ*θ*sigmas[2])^2/(2*sigmas[1])^2,
         (λ*θ*sigmas[1])^2/(2*sigmas[2])^2, 
-        (λ/2)^2, 
         (λ/3)^2, 
-        (λ*θ*sigmas[2])^2/(3*sigmas[1])^2, 
         (λ*θ*sigmas[1])^2/(3*sigmas[2])^2, 
+        variance_intercept, 
+        (λ*θ*sigmas[2])^2/(1*sigmas[1])^2, 
+        (λ/1)^2, 
+        (λ*θ*sigmas[2])^2/(2*sigmas[1])^2, 
+        (λ/2)^2, 
+        (λ*θ*sigmas[2])^2/(3*sigmas[1])^2, 
         (λ/3)^2
     ]
+    if !intercept
+        selector = vcat(2:7, 9:14)
+        b_manual = b_manual[selector]
+        V_diag_manual = V_diag_manual[selector]
+    end
     V_manual = Diagonal(V_diag_manual)
 
     @test all(b_minnesota .== b_manual)
